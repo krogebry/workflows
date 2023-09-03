@@ -54,17 +54,11 @@ jobs:
   lint:
     runs-on: [k3s]
 
-#    container:
-#      image: 903369196314.dkr.ecr.us-east-1.amazonaws.com/github-action-runner:latest
-#      credentials:
-#        username: ${{ secrets.docker_username }}
-#        password: ${{ secrets.docker_password }}
-
     steps:
       - uses: actions/checkout@v3
         if: startsWith(github.ref, 'refs/tags/') == false
 
-      - uses: ./.github/actions/helm-lint
+      - uses: krogebry/github-actions/helm-lint@main
         with:
           helm_chart_path: ${{ inputs.helm_chart_path }}
 
@@ -76,12 +70,6 @@ jobs:
     needs:
       - lint
 
-#    container:
-#      image: 903369196314.dkr.ecr.us-east-1.amazonaws.com/github-action-runner:latest
-#      credentials:
-#        username: ${{ secrets.docker_username }}
-#        password: ${{ secrets.docker_password }}
-
     steps:
       - uses: actions/checkout@v3
 
@@ -89,7 +77,7 @@ jobs:
         run: echo "SHORT_SHA=$(echo ${{github.sha}}|cut -c1-8)" >> $GITHUB_ENV
 
       - id: local-deploy
-        uses: ./.github/actions/helm-deploy-local
+        uses: krogebry/github-actions/helm-deploy-local@main
         with:
           image_tag: dev
           environment: dev
@@ -135,14 +123,14 @@ jobs:
           git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
           cat ~/.gitconfig
 
-      - uses: ./.github/actions/helm-terratest
+      - uses: krogebry/github-actions/helm-terratest@main
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
           namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
           test_directory: ${{ inputs.helm_chart_path }}/${{ inputs.helm_chart_test_path }}
           sg_github_token: ${{ secrets.sg_github_token }}
 
-      - uses: ./.github/actions/helm-kube-score
+      - uses: krogebry/github-actions/helm-kube-score@main
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
           namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
@@ -171,7 +159,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: ./.github/actions/helm-publish
+      - uses: krogebry/github-actions/helm-publish@main
         with:
           helm_repo_url: ${{ inputs.helm_repo_url }}
           helm_repo_name: ${{ inputs.helm_repo_name }}

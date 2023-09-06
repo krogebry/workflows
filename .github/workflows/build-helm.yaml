@@ -1,11 +1,11 @@
 name: Build a helm chart
 
 permissions:
-  issues: write # This is required for .github/actions/action-review-tool
-  checks: write # This is required for synced-actions/mikepenz-action-junit-report
-  contents: read # This is required for actions/checkout
-  id-token: write # This is required for requesting the JWT
-  pull-requests: write # This is required for actions/github-script
+  issues: write
+  checks: write
+  contents: read
+  id-token: write
+  pull-requests: write
 
 on:
   workflow_call:
@@ -14,6 +14,10 @@ on:
         type: string
         default: dev
         description: Deployment Environment ( dev, stage, prod )
+
+      application_name:
+        type: string
+        description: Application name
 
       helm_repo_name:
         type: string
@@ -42,8 +46,6 @@ on:
     secrets:
       git_ssh_key:
         required: true
-      sg_github_token:
-        required: true
       docker_username:
         required: true
       docker_password:
@@ -58,7 +60,7 @@ jobs:
       - uses: actions/checkout@v3
         if: startsWith(github.ref, 'refs/tags/') == false
 
-      - uses: krogebry/github-actions/helm-lint@main
+      - uses: krogebry/github-actions/helm-lint@cicd-test
         with:
           helm_chart_path: ${{ inputs.helm_chart_path }}
 
@@ -77,7 +79,7 @@ jobs:
         run: echo "SHORT_SHA=$(echo ${{github.sha}}|cut -c1-8)" >> $GITHUB_ENV
 
       - id: local-deploy
-        uses: krogebry/github-actions/helm-deploy-local@main
+        uses: krogebry/github-actions/helm-deploy-local@cicd-test
         with:
           image_tag: dev
           environment: dev
@@ -94,12 +96,6 @@ jobs:
 
     needs:
       - helm-deploy
-
-#    container:
-#      image: 903369196314.dkr.ecr.us-east-1.amazonaws.com/github-action-runner:latest
-#      credentials:
-#        username: ${{ secrets.docker_username }}
-#        password: ${{ secrets.docker_password }}
 
     env:
       GOPRIVATE: github.com/krogebry/golibs
@@ -118,29 +114,23 @@ jobs:
       - name: Get short SHA
         run: echo "SHORT_SHA=$(echo ${{github.sha}}|cut -c1-8)" >> $GITHUB_ENV
 
-      - id: setup-private-github
-        run: |
-          git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
-          cat ~/.gitconfig
-
-      - uses: krogebry/github-actions/helm-terratest@main
+      - uses: krogebry/github-actions/helm-terratest@cicd-test
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
-          namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
+          namespace: ${{ inputs.application_name }}-${{ inputs.environment }}
           test_directory: ${{ inputs.helm_chart_path }}/${{ inputs.helm_chart_test_path }}
-          sg_github_token: ${{ secrets.sg_github_token }}
 
-      - uses: krogebry/github-actions/helm-kube-score@main
+      - uses: krogebry/github-actions/helm-kube-score@cicd-test
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
-          namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
+          namespace: ${{ inputs.application_name }}-${{ inputs.environment }}
 
       - id: helm-cleanup
         name: Uninstall helm chart
         run: |
           helm \
             delete \
-            --namespace ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }} \
+            --namespace ${{ inputs.application_name }}-${{ inputs.environment }} \
             ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
 
   publish:
@@ -159,7 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: krogebry/github-actions/helm-publish@main
+      - uses: krogebry/github-actions/helm-publish@cicd-test
         with:
           helm_repo_url: ${{ inputs.helm_repo_url }}
           helm_repo_name: ${{ inputs.helm_repo_name }}

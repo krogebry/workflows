@@ -95,12 +95,6 @@ jobs:
     needs:
       - helm-deploy
 
-#    container:
-#      image: 903369196314.dkr.ecr.us-east-1.amazonaws.com/github-action-runner:latest
-#      credentials:
-#        username: ${{ secrets.docker_username }}
-#        password: ${{ secrets.docker_password }}
-
     env:
       GOPRIVATE: github.com/krogebry/golibs
       GIT_SSH_COMMAND: "echo '${{ secrets.git_ssh_key }}' | base64 -d > id_rsa

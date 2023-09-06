@@ -15,6 +15,10 @@ on:
         default: dev
         description: Deployment Environment ( dev, stage, prod )
 
+      application_name:
+        type: string
+        description: Application name
+
       helm_repo_name:
         type: string
         required: true
@@ -112,29 +116,24 @@ jobs:
       - name: Get short SHA
         run: echo "SHORT_SHA=$(echo ${{github.sha}}|cut -c1-8)" >> $GITHUB_ENV
 
-#      - id: setup-private-github
-#        run: |
-#          git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
-#          cat ~/.gitconfig
-
       - uses: krogebry/github-actions/helm-terratest@cicd-test
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
-          namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
+          namespace: ${{ inputs.application_name }}-${{ inputs.environment }}
           test_directory: ${{ inputs.helm_chart_path }}/${{ inputs.helm_chart_test_path }}
           sg_github_token: ${{ secrets.sg_github_token }}
 
       - uses: krogebry/github-actions/helm-kube-score@cicd-test
         with:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
-          namespace: ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }}
+          namespace: ${{ inputs.application_name }}-${{ inputs.environment }}
 
       - id: helm-cleanup
         name: Uninstall helm chart
         run: |
           helm \
             delete \
-            --namespace ${{ inputs.mtfuji_application_name }}-${{ inputs.environment }} \
+            --namespace ${{ inputs.application_name }}-${{ inputs.environment }} \
             ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
 
   publish:

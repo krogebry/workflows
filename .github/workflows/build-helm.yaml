@@ -112,10 +112,10 @@ jobs:
       - name: Get short SHA
         run: echo "SHORT_SHA=$(echo ${{github.sha}}|cut -c1-8)" >> $GITHUB_ENV
 
-      - id: setup-private-github
-        run: |
-          git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
-          cat ~/.gitconfig
+#      - id: setup-private-github
+#        run: |
+#          git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
+#          cat ~/.gitconfig
 
       - uses: krogebry/github-actions/helm-terratest@cicd-test
         with:

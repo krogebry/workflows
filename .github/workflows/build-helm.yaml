@@ -46,8 +46,6 @@ on:
     secrets:
       git_ssh_key:
         required: true
-      sg_github_token:
-        required: true
       docker_username:
         required: true
       docker_password:
@@ -121,7 +119,6 @@ jobs:
           stack_id: ${{ inputs.helm_chart_name }}-${{ env.SHORT_SHA }}
           namespace: ${{ inputs.application_name }}-${{ inputs.environment }}
           test_directory: ${{ inputs.helm_chart_path }}/${{ inputs.helm_chart_test_path }}
-          sg_github_token: ${{ secrets.sg_github_token }}
 
       - uses: krogebry/github-actions/helm-kube-score@cicd-test
         with:
